@@ -1240,6 +1240,13 @@ class Scheduler:
         running_scheduled = SchedulerRunningOutputs.create_empty()
         swapped_in = SchedulerSwappedInOutputs.create_empty()
 
+        swapped_in = self._schedule_swapped(budget, curr_loras)
+        if self.scheduler_config.policy == "priority":
+            self._schedule_priority_preemption(budget)
+        running_scheduled = self._schedule_running(budget, curr_loras, enable_chunking=False)
+        prefills = self._schedule_prefills(budget, curr_loras, enable_chunking=False)
+
+        '''
         # If any requests are swapped, prioritized swapped requests.
         if not self.swapped:
             prefills = self._schedule_prefills(budget,
@@ -1264,6 +1271,7 @@ class Scheduler:
                     len(running_scheduled.swapped_out) == 0):
                 swapped_in = \
                     self._schedule_swapped(budget, curr_loras)
+        '''
 
         assert (budget.num_batched_tokens
                 <= self.scheduler_config.max_num_batched_tokens)
