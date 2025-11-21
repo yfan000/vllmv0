@@ -1294,10 +1294,10 @@ class Scheduler:
 
         '''
         # If any requests are swapped, prioritized swapped requests.
-        #if not self.swapped:
-        prefills = self._schedule_prefills(budget,
-                                            curr_loras,
-                                            enable_chunking=False)
+        if not self.swapped:
+            prefills = self._schedule_prefills(budget,
+                                                curr_loras,
+                                                enable_chunking=False)
 
         if len(prefills.seq_groups
                ) == 0 and self.scheduler_config.policy == "priority":
