@@ -747,6 +747,10 @@ class Scheduler:
 
                 # Determine victim sequence
                 cont_loop = True
+                if self.user_specified_preemption_mode == "swap" and (not self.block_manager.can_swap_out(seq_group)):
+                    cont_loop = False
+                    break
+
                 if running_queue:
                     # Preempt the lowest-priority sequence group.
                     victim_seq_group = running_queue.pop()
@@ -1007,6 +1011,10 @@ class Scheduler:
                         )):
                     break
 
+
+                if self.user_specified_preemption_mode == "swap" and (not self.block_manager.can_swap_out(running_queue[-1])):
+                        break
+                
                 # Adjust budget to remove the victim sequence group
                 vseq_group = running_queue.pop()
                 num_running_tokens_uncached, _ = (
