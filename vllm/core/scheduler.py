@@ -1423,6 +1423,33 @@ class Scheduler:
             scheduler_config=self.scheduler_config,
         )
 
+        # update priority
+        time_stamp = time.time()
+        need_swap_in = False
+        if self.scheduler_config.policy == "priority":
+            for seq_group in self.running:
+                if seq_group.is_prefill() == 0: # prefill request
+                    seq_group.priority = float('-inf')+1
+                else: # decode request
+                    seq_group.priority = float('-inf')
+                    if (seq_group.get_output_len()-seq_group.output_token_len_before_preemption) > self.preemption_length_threshold: # if the decode request could be preempted
+                        if seq_group.get_output_len()-(time_stamp-seq_group.decoding_time)*self.reading_speed > self.ahead_tokens: # faster than reading speed
+                            seq_group.priority = abs(seq_group.original_priority)*1000
+
+            for seq_group in self.swapped:
+                if seq_group.get_output_len() > self.preemption_back_to_running_threshold:
+                    if seq_group.get_output_len()-(time_stamp-seq_group.decoding_time)*self.reading_speed < self.preemption_back_to_running_threshold: # approaching reading speed
+                        seq_group.priority = float('-inf')
+                        need_swap_in = True
+                    else:
+                        seq_group.priority = abs(seq_group.original_priority) * 1000 # could still waiting in the queue
+
+            self.running = deque(sorted(self.running, key=self._get_priority))
+            self.waiting = deque(sorted(self.waiting, key=self._get_priority))
+            self.swapped = deque(sorted(self.waiting, key=self._get_priority))
+
+        preemption_cnt = self._schedule_priority_preemption(budget)
+
         # Decoding should be always scheduled first by fcfs.
         running_scheduled = self._schedule_running(
             budget,
