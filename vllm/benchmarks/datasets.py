@@ -81,6 +81,7 @@ class SampleRequest:
     ] = None
     lora_request: Optional[LoRARequest] = None
     request_id: Optional[str] = None
+    priority: int = 0
 
 
 # -----------------------------------------------------------------------------
@@ -1637,6 +1638,7 @@ class CustomDataset(BenchmarkDataset):
             if len(sampled_requests) >= num_requests:
                 break
             prompt = item["prompt"]
+            priority = item.get("priority", 0)
 
             # apply template
             if not skip_chat_template:
@@ -1656,6 +1658,7 @@ class CustomDataset(BenchmarkDataset):
                     prompt_len=prompt_len,
                     expected_output_len=output_len,
                     request_id=request_id_prefix + str(i),
+                    priority=priority,
                 ))
         self.maybe_oversample_requests(sampled_requests, num_requests, 
                                        request_id_prefix, no_oversample)

@@ -73,6 +73,7 @@ class RequestFuncInput:
     ignore_eos: bool = False
     language: Optional[str] = None
     request_id: Optional[str] = None
+    priority: int = 0
 
 
 @dataclass
@@ -113,6 +114,7 @@ async def async_request_openai_completions(
         "model": request_func_input.model_name
         if request_func_input.model_name else request_func_input.model,
         "prompt": request_func_input.prompt,
+        "priority": request_func_input.priority,
         "temperature": 0.0,
         "repetition_penalty": 1.0,
         "max_tokens": request_func_input.output_len,
@@ -240,6 +242,7 @@ async def async_request_openai_chat_completions(
                 "content": content
             },
         ],
+        "priority": request_func_input.priority,
         "temperature":
         0.0,
         "max_completion_tokens":
