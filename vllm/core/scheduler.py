@@ -1239,7 +1239,7 @@ class Scheduler:
         prefills = SchedulerPrefillOutputs.create_empty()
         running_scheduled = SchedulerRunningOutputs.create_empty()
         swapped_in = SchedulerSwappedInOutputs.create_empty()
-
+        '''
         swapped_in = self._schedule_swapped(budget, curr_loras)
         if self.scheduler_config.policy == "priority":
             self._schedule_priority_preemption(budget)
@@ -1271,7 +1271,7 @@ class Scheduler:
                     len(running_scheduled.swapped_out) == 0):
                 swapped_in = \
                     self._schedule_swapped(budget, curr_loras)
-        '''
+        
 
         assert (budget.num_batched_tokens
                 <= self.scheduler_config.max_num_batched_tokens)
