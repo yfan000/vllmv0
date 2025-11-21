@@ -1281,9 +1281,7 @@ class Scheduler:
             self.swapped = deque(sorted(self.waiting, key=self._get_priority))
 
         prefills = self._schedule_prefills(budget, curr_loras, enable_chunking=False)
-        if len(prefills.seq_groups
-               ) == 0 and self.scheduler_config.policy == "priority":
-            self._schedule_priority_preemption(budget)
+        
         '''
         swapped_in = self._schedule_swapped(budget, curr_loras)
         if self.scheduler_config.policy == "priority":
@@ -1299,11 +1297,11 @@ class Scheduler:
                                                 curr_loras,
                                                 enable_chunking=False)
 
-        '''
+        ''''''
         if len(prefills.seq_groups
                ) == 0 and self.scheduler_config.policy == "priority":
             self._schedule_priority_preemption(budget)
-        '''
+
         
         # Don't schedule decodes if prefills are scheduled.
         # NOTE: If `_schedule_prefills` doesn't enable chunking, self.running
