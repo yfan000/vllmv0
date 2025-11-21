@@ -1279,8 +1279,6 @@ class Scheduler:
             self.running = deque(sorted(self.running, key=self._get_priority))
             self.waiting = deque(sorted(self.waiting, key=self._get_priority))
             self.swapped = deque(sorted(self.waiting, key=self._get_priority))
-
-        prefills = self._schedule_prefills(budget, curr_loras, enable_chunking=False)
         
         '''
         swapped_in = self._schedule_swapped(budget, curr_loras)
