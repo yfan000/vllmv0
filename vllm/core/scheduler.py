@@ -1290,9 +1290,11 @@ class Scheduler:
                                                 curr_loras,
                                                 enable_chunking=False)
 
+        '''
         if len(prefills.seq_groups
-               ) == 0 and self.scheduler_config.policy == "priority":
+               ) == 0 and self.scheduler_config.policy == "priority" and self.num_cumulative_preemption < 30:
             self._schedule_priority_preemption(budget)
+        '''
 
         # Don't schedule decodes if prefills are scheduled.
         # NOTE: If `_schedule_prefills` doesn't enable chunking, self.running
