@@ -1033,7 +1033,7 @@ class Scheduler:
             self.remove_seq_from_computed_blocks_tracker(
                 seq_group, SequenceStatus.WAITING)
 
-        waiting_queue = deque(sorted(waiting_queue, key=self._get_priority_time))
+        waiting_queue = deque(sorted(waiting_queue, key=self._get_priority))
 
         self.waiting = waiting_queue
         self.running = running_queue
@@ -1257,6 +1257,7 @@ class Scheduler:
 
         # update priority
         time_stamp = time.time()
+        need_swap_in = False
         if self.scheduler_config.policy == "priority":
             for seq_group in self.running:
                 if seq_group.is_prefill() == 0: # prefill request
@@ -1271,11 +1272,12 @@ class Scheduler:
                 if seq_group.get_output_len() > self.preemption_back_to_running_threshold:
                     if seq_group.get_output_len()-(time_stamp-seq_group.decoding_time)*self.reading_speed < self.preemption_back_to_running_threshold: # approaching reading speed
                         seq_group.priority = float('-inf')
+                        need_swap_in = True
                     else:
                         seq_group.priority = abs(seq_group.original_priority) * 1000 # could still waiting in the queue
 
             self.running = deque(sorted(self.running, key=self._get_priority))
-            self.waiting = deque(sorted(self.waiting, key=self._get_priority_time))
+            self.waiting = deque(sorted(self.waiting, key=self._get_priority))
             self.swapped = deque(sorted(self.waiting, key=self._get_priority))
 
         prefills = self._schedule_prefills(budget, curr_loras, enable_chunking=False)
@@ -1291,17 +1293,18 @@ class Scheduler:
 
         '''
         # If any requests are swapped, prioritized swapped requests.
-        if not self.swapped:
+        # if not self.swapped:
+        if not need_swap_in:
             prefills = self._schedule_prefills(budget,
                                                 curr_loras,
                                                 enable_chunking=False)
 
         '''
         if len(prefills.seq_groups
-               ) == 0 and self.scheduler_config.policy == "priority" and self.num_cumulative_preemption < 30:
+               ) == 0 and self.scheduler_config.policy == "priority":
             self._schedule_priority_preemption(budget)
         '''
-
+        
         # Don't schedule decodes if prefills are scheduled.
         # NOTE: If `_schedule_prefills` doesn't enable chunking, self.running
         # only contains decode requests, not chunked prefills.
