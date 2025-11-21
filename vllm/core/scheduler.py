@@ -478,6 +478,13 @@ class Scheduler:
         # preemption mode, RECOMPUTE or SWAP
         self.user_specified_preemption_mode = scheduler_config.preemption_mode
 
+        self.total_scheduled_requests = 1
+        self.total_scheduled_size = 100
+        self.reading_speed = 300.0/60.0
+        self.preemption_length_threshold = 1000
+        self.preemption_back_to_running_threshold = 100
+        self.ahead_tokens = 500
+
         # The following field is test-only. It is used to inject artificial
         # preemption.
         self.enable_artificial_preemption = ENABLE_ARTIFICIAL_PREEMPT
@@ -1239,6 +1246,34 @@ class Scheduler:
         prefills = SchedulerPrefillOutputs.create_empty()
         running_scheduled = SchedulerRunningOutputs.create_empty()
         swapped_in = SchedulerSwappedInOutputs.create_empty()
+
+        # update priority
+        time_stamp = time.time()
+        if self.scheduler_config.policy == "priority":
+            for seq_group in self.running:
+                if seq_group.is_prefill() == 0: # prefill request
+                    seq_group.priority = float('-inf')+1
+                else: # decode request
+                    seq_group.priority = float('-inf')
+                    if (seq_group.get_output_len()-seq_group.output_token_len_before_preemption) > self.preemption_length_threshold: # if the decode request could be preempted
+                        if seq_group.get_output_len()-(time_stamp-seq_group.decoding_time)*self.reading_speed > self.ahead_tokens: # faster than reading speed
+                            seq_group.priority = abs(seq_group.original_priority)*1000
+
+            for seq_group in self.swapped:
+                if seq_group.get_output_len() > self.preemption_back_to_running_threshold:
+                    if seq_group.get_output_len()-(time_stamp-seq_group.decoding_time)*self.reading_speed < self.preemption_back_to_running_threshold: # approaching reading speed
+                        seq_group.priority = float('-inf')
+                    else:
+                        seq_group.priority = abs(seq_group.original_priority) * 1000 # could still waiting in the queue
+
+            self.running = deque(sorted(self.running, key=self._get_priority))
+            self.waiting = deque(sorted(self.waiting, key=self._get_priority))
+            self.swapped = deque(sorted(self.waiting, key=self._get_priority))
+
+        prefills = self._schedule_prefills(budget, curr_loras, enable_chunking=False)
+        if len(prefills.seq_groups
+               ) == 0 and self.scheduler_config.policy == "priority":
+            self._schedule_priority_preemption(budget)
         '''
         swapped_in = self._schedule_swapped(budget, curr_loras)
         if self.scheduler_config.policy == "priority":
@@ -1248,10 +1283,10 @@ class Scheduler:
 
         '''
         # If any requests are swapped, prioritized swapped requests.
-        if not self.swapped:
-            prefills = self._schedule_prefills(budget,
-                                               curr_loras,
-                                               enable_chunking=False)
+        #if not self.swapped:
+        prefills = self._schedule_prefills(budget,
+                                            curr_loras,
+                                            enable_chunking=False)
 
         if len(prefills.seq_groups
                ) == 0 and self.scheduler_config.policy == "priority":
@@ -1272,7 +1307,6 @@ class Scheduler:
                 swapped_in = \
                     self._schedule_swapped(budget, curr_loras)
         
-
         assert (budget.num_batched_tokens
                 <= self.scheduler_config.max_num_batched_tokens)
         assert budget.num_curr_seqs <= self.scheduler_config.max_num_seqs
@@ -1798,6 +1832,7 @@ class Scheduler:
             self._preempt_by_swap(seq_group, blocks_to_swap_out)
         else:
             raise AssertionError("Invalid preemption mode.")
+        seq_group.output_token_len_before_preemption = seq_group.get_output_len()
         return preemption_mode
 
     def _preempt_by_recompute(

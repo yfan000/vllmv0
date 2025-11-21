@@ -709,6 +709,9 @@ class SequenceGroup:
         self.encoder_seq = encoder_seq
         self.trace_headers = trace_headers
         self.priority = priority
+        self.original_priority = priority
+        self.decoding_time = 0
+        self.output_token_len_before_preemption = 0
 
         self.cached_request_output = None
 
@@ -781,6 +784,7 @@ class SequenceGroup:
         if (self.metrics.first_token_time is None
                 and self.first_seq.get_output_len() == 1):
             self.metrics.first_token_time = time
+            self.decoding_time = time
 
     def maybe_set_first_scheduled_time(self, time: float) -> None:
         """Sets the first scheduled time and time in queue for Request
