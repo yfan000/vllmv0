@@ -964,6 +964,12 @@ class Scheduler:
             The priority of the sequence group.
         """
         return seq_group.priority, seq_group.arrival_time
+    
+    def _get_priority_time(self,
+                      seq_group: SequenceGroup) -> float:
+        """Get the priority of the sequence group.
+        """
+        return seq_group.arrival_time
 
     def _schedule_priority_preemption(
         self,
@@ -1027,7 +1033,7 @@ class Scheduler:
             self.remove_seq_from_computed_blocks_tracker(
                 seq_group, SequenceStatus.WAITING)
 
-        waiting_queue = deque(sorted(waiting_queue, key=self._get_priority))
+        waiting_queue = deque(sorted(waiting_queue, key=self._get_priority_time))
 
         self.waiting = waiting_queue
         self.running = running_queue
@@ -1269,7 +1275,7 @@ class Scheduler:
                         seq_group.priority = abs(seq_group.original_priority) * 1000 # could still waiting in the queue
 
             self.running = deque(sorted(self.running, key=self._get_priority))
-            self.waiting = deque(sorted(self.waiting, key=self._get_priority))
+            self.waiting = deque(sorted(self.waiting, key=self._get_priority_time))
             self.swapped = deque(sorted(self.waiting, key=self._get_priority))
 
         prefills = self._schedule_prefills(budget, curr_loras, enable_chunking=False)
