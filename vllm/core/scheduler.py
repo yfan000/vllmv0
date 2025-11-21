@@ -1448,7 +1448,7 @@ class Scheduler:
             self.waiting = deque(sorted(self.waiting, key=self._get_priority))
             self.swapped = deque(sorted(self.waiting, key=self._get_priority))
 
-        preemption_cnt = self._schedule_priority_preemption(budget)
+        #preemption_cnt = self._schedule_priority_preemption(budget)
 
         # Decoding should be always scheduled first by fcfs.
         running_scheduled = self._schedule_running(
