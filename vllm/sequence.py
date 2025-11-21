@@ -758,6 +758,9 @@ class SequenceGroup:
     @property
     def lora_int_id(self) -> int:
         return self.lora_request.lora_int_id if self.lora_request else 0
+    
+    def get_output_len(self) -> int:
+        return self.first_seq.get_output_len()
 
     def set_last_token_time(self, now: float) -> None:
         """Sets the last token time for Request level timings."""
