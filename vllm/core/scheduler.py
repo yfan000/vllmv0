@@ -44,6 +44,7 @@ class PreemptionMode(enum.Enum):
 
     SWAP = enum.auto()
     RECOMPUTE = enum.auto()
+    FAIL = enum.auto()
 
 
 @dataclass
@@ -777,8 +778,10 @@ class Scheduler:
                                                    blocks_to_swap_out)
                     if preempted_mode == PreemptionMode.RECOMPUTE:
                         preempted.append(victim_seq_group)
-                    else:
+                    elif preempted_mode == PreemptionMode.SWAP:
                         swapped_out.append(victim_seq_group)
+                    else:
+                        cont_loop = False
 
                 if not cont_loop:
                     break
@@ -1829,7 +1832,8 @@ class Scheduler:
         if preemption_mode == PreemptionMode.RECOMPUTE:
             self._preempt_by_recompute(seq_group)
         elif preemption_mode == PreemptionMode.SWAP:
-            self._preempt_by_swap(seq_group, blocks_to_swap_out)
+            if not self._preempt_by_swap(seq_group, blocks_to_swap_out):
+                return PreemptionMode.FAIL
         else:
             raise AssertionError("Invalid preemption mode.")
         seq_group.output_token_len_before_preemption = seq_group.get_output_len()
@@ -1851,8 +1855,8 @@ class Scheduler:
         self,
         seq_group: SequenceGroup,
         blocks_to_swap_out: List[Tuple[int, int]],
-    ) -> None:
-        self._swap_out(seq_group, blocks_to_swap_out)
+    ) -> bool:
+        return self._swap_out(seq_group, blocks_to_swap_out)
 
     def _swap_in(
         self,
@@ -1868,17 +1872,19 @@ class Scheduler:
         self,
         seq_group: SequenceGroup,
         blocks_to_swap_out: List[Tuple[int, int]],
-    ) -> None:
+    ) -> bool:
         if not self.block_manager.can_swap_out(seq_group):
             # FIXME(woosuk): Abort the sequence group instead of aborting the
             # entire engine.
-            raise RuntimeError(
-                "Aborted due to the lack of CPU swap space. Please increase "
-                "the swap space to avoid this error.")
+            #raise RuntimeError(
+            #    "Aborted due to the lack of CPU swap space. Please increase "
+            #    "the swap space to avoid this error.")
+            return False
         mapping = self.block_manager.swap_out(seq_group)
         blocks_to_swap_out.extend(mapping)
         for seq in seq_group.get_seqs(status=SequenceStatus.RUNNING):
             seq.status = SequenceStatus.SWAPPED
+        return True
 
     def _passed_delay(self, now: float) -> bool:
         if self.prev_prompt:
