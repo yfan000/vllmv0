@@ -855,6 +855,10 @@ class Scheduler:
         leftover_swapped: Deque[SequenceGroup] = deque()
         while swapped_queue:
             seq_group = swapped_queue[0]
+            if seq_group.priority > float('-inf')+1:
+                leftover_swapped.appendleft(seq_group)
+                swapped_queue.popleft()
+                continue
 
             # If the sequence group cannot be swapped in, stop.
             is_prefill = seq_group.is_prefill()
@@ -1289,7 +1293,7 @@ class Scheduler:
 
         '''
         # If any requests are swapped, prioritized swapped requests.
-        # if not self.swapped:
+        #if not self.swapped:
         if not need_swap_in:
             prefills = self._schedule_prefills(budget,
                                                 curr_loras,
@@ -1445,8 +1449,8 @@ class Scheduler:
                         seq_group.priority = abs(seq_group.original_priority) * 1000 # could still waiting in the queue
 
             self.running = deque(sorted(self.running, key=self._get_priority))
-            self.waiting = deque(sorted(self.waiting, key=self._get_priority))
-            self.swapped = deque(sorted(self.waiting, key=self._get_priority))
+            # self.waiting = deque(sorted(self.waiting, key=self._get_priority))
+            # self.swapped = deque(sorted(self.waiting, key=self._get_priority))
 
         #preemption_cnt = self._schedule_priority_preemption(budget)
 
@@ -1460,9 +1464,8 @@ class Scheduler:
 
         # Schedule swapped out requests.
         # If preemption happens, it means we don't have space for swap-in.
-        if len(running_scheduled.preempted) + len(
-                running_scheduled.swapped_out) == 0:
-            swapped_in = self._schedule_swapped(budget, curr_loras)
+        # if len(running_scheduled.preempted) + len(running_scheduled.swapped_out) == 0:
+        swapped_in = self._schedule_swapped(budget, curr_loras)
 
         prefills = self._schedule_prefills(
             budget,
