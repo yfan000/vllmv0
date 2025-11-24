@@ -137,3 +137,8 @@ class BlockSpaceManager(ABC):
     @abstractmethod
     def remove_seq_from_computed_blocks_tracker(self, seq: Sequence) -> None:
         pass
+
+    @abstractmethod
+    def get_usage(self) -> float:
+        pass
+        

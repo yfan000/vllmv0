@@ -835,7 +835,8 @@ class Scheduler:
         swapped_queue = self.swapped
 
         leftover_swapped: Deque[SequenceGroup] = deque()
-        while budget.num_curr_seqs < self.scheduler_config.max_num_seqs and swapped_queue and self.kv_cache_manager.usage < 0.7:
+        # while budget.num_curr_seqs < self.scheduler_config.max_num_seqs and swapped_queue and self.kv_cache_manager.usage < 0.7 and len(self.waiting) == 0:
+        while budget.num_curr_seqs < self.scheduler_config.max_num_seqs and swapped_queue and self.block_manager.get_usage()<0.8:
             seq_group = swapped_queue[0]
 
             # If the sequence group cannot be swapped in, stop.

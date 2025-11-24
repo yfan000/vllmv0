@@ -101,3 +101,6 @@ class PlaceholderBlockSpaceManager(BlockSpaceManager):
 
     def remove_seq_from_computed_blocks_tracker(self, seq: Sequence) -> None:
         return
+    
+    def get_usage(self) -> float:
+        return 1.0
