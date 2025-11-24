@@ -1449,8 +1449,8 @@ class Scheduler:
                         seq_group.priority = abs(seq_group.original_priority) * 1000 # could still waiting in the queue
 
             self.running = deque(sorted(self.running, key=self._get_priority))
-            # self.waiting = deque(sorted(self.waiting, key=self._get_priority))
-            # self.swapped = deque(sorted(self.waiting, key=self._get_priority))
+            self.waiting = deque(sorted(self.waiting, key=self._get_priority))
+            self.swapped = deque(sorted(self.waiting, key=self._get_priority))
 
         #preemption_cnt = self._schedule_priority_preemption(budget)
 
