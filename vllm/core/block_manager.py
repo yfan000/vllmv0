@@ -523,4 +523,4 @@ class SelfAttnBlockSpaceManager(BlockSpaceManager):
         return self._computed_blocks_tracker.get_num_cached_tokens(seq)
 
     def get_usage(self) -> float:
-        return 1.0*self.block_allocator.get_num_free_blocks/self.block_allocator.get_num_total_blocks
+        return 1.0*self.block_allocator.get_num_free_blocks()/self.block_allocator.get_num_total_blocks()
