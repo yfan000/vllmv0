@@ -959,7 +959,7 @@ class Scheduler:
         leftover_swapped: Deque[SequenceGroup] = deque()
         while swapped_queue:
             seq_group = swapped_queue[0]
-            if seq_group.priority > float('-inf')+1:
+            if seq_group.priority > float('-inf')+1 and len(self.waiting) > 0:
                 leftover_swapped.appendleft(seq_group)
                 swapped_queue.popleft()
                 continue
