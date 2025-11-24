@@ -1282,7 +1282,7 @@ class Scheduler:
 
             self.running = deque(sorted(self.running, key=self._get_priority))
             self.waiting = deque(sorted(self.waiting, key=self._get_priority))
-            self.swapped = deque(sorted(self.waiting, key=self._get_priority))
+            self.swapped = deque(sorted(self.swapped, key=self._get_priority))
         
         '''
         swapped_in = self._schedule_swapped(budget, curr_loras)
@@ -1450,7 +1450,7 @@ class Scheduler:
 
             self.running = deque(sorted(self.running, key=self._get_priority))
             self.waiting = deque(sorted(self.waiting, key=self._get_priority))
-            self.swapped = deque(sorted(self.waiting, key=self._get_priority))
+            self.swapped = deque(sorted(self.swapped, key=self._get_priority))
 
         #preemption_cnt = self._schedule_priority_preemption(budget)
 
