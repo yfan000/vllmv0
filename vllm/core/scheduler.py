@@ -959,7 +959,7 @@ class Scheduler:
         leftover_swapped: Deque[SequenceGroup] = deque()
         while swapped_queue:
             seq_group = swapped_queue[0]
-            if seq_group.priority > float('-inf')+1 and len(self.waiting) > 0:
+            if seq_group.priority > float('-inf')+1:
                 leftover_swapped.appendleft(seq_group)
                 swapped_queue.popleft()
                 continue
@@ -1555,6 +1555,9 @@ class Scheduler:
             self.running = deque(sorted(self.running, key=self._get_priority))
             self.waiting = deque(sorted(self.waiting, key=self._get_priority))
             self.swapped = deque(sorted(self.swapped, key=self._get_priority))
+
+        if self.scheduler_config.policy == "priority":
+            self._schedule_priority_preemption(budget)
 
         #preemption_cnt = self._schedule_priority_preemption(budget)
 
