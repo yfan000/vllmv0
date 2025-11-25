@@ -1572,7 +1572,8 @@ class Scheduler:
         # Schedule swapped out requests.
         # If preemption happens, it means we don't have space for swap-in.
         # if len(running_scheduled.preempted) + len(running_scheduled.swapped_out) == 0:
-        swapped_in = self._schedule_swapped(budget, curr_loras)
+        if self.scheduler_config.policy == "priority":
+            swapped_in = self._schedule_swapped(budget, curr_loras)
 
         prefills = self._schedule_prefills(
             budget,
